@@ -1,22 +1,25 @@
-const hre = require("hardhat");
+const hre = require('hardhat');
+const fs = require('fs');
 
 async function main() {
-    console.log("Deploying the contract...");
+    console.log('Deploying the contract...');
 
     // Compile the contract
-    await hre.run("compile");
+    await hre.run('compile');
 
-    // Get the contract factory
-    const BlockchainVoting = await hre.ethers.getContractFactory("BlockchainVoting");
-
-    // Deploy the contract
+    const BlockchainVoting = await hre.ethers.getContractFactory(
+        'BlockchainVoting'
+    );
     const blockchainVoting = await BlockchainVoting.deploy();
     await blockchainVoting.deployed();
 
-    console.log(`BlockchainVoting deployed to: ${blockchainVoting.address}`);
+    const contractAddress = blockchainVoting.address;
+    console.log(`BlockchainVoting deployed to: ${contractAddress}`);
+
+    // Save the contract address to a file
+    fs.writeFileSync('contract-address.txt', contractAddress);
 }
 
-// Handle errors
 main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
