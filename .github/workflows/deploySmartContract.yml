@@ -19,6 +19,9 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: 18 # Use Node.js 18
+                
+            - name: navigate to voting
+              run: cd blockchain-voting
 
             # Step 3: Install dependencies
             - name: Install dependencies
