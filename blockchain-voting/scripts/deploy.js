@@ -2,6 +2,13 @@ const hre = require('hardhat');
 const fs = require('fs');
 
 async function main() {
+    const deployedAddress = process.env.DEPLOYED_CONTRACT_ADDRESS;
+
+    if (deployedAddress) {
+        console.log(`Contract already deployed at address: ${deployedAddress}`);
+        return;
+    }
+
     console.log('Deploying the contract...');
 
     // Compile the contract
