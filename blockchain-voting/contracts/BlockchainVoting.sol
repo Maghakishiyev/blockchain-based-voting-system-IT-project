@@ -17,6 +17,7 @@ contract BlockchainVoting {
         uint endTime;
         string[] candidates;
         mapping(address => Voter) voters;
+        address[] voterAddresses; // Array to store voter addresses
         mapping(uint => uint) votes; // Candidate ID -> vote count
         bool isActive;
     }
@@ -100,8 +101,34 @@ contract BlockchainVoting {
         );
 
         election.voters[voter].isRegistered = true;
+        election.voterAddresses.push(voter); // Store the voter's address
 
         emit VoterRegistered(electionId, voter);
+    }
+
+    // Function to get the list of voters for an election
+    function getVoters(
+        uint electionId
+    ) public view electionExists(electionId) returns (address[] memory) {
+        return elections[electionId].voterAddresses;
+    }
+
+    // Function to get a voter's profile based on election ID
+    function getVoterProfile(
+        uint electionId,
+        address voter
+    ) public view electionExists(electionId) returns (bool, bool, uint) {
+        Election storage election = elections[electionId];
+        Voter storage voterProfile = election.voters[voter];
+        require(
+            voterProfile.isRegistered,
+            "This voter is not registered in the specified election"
+        );
+        return (
+            voterProfile.isRegistered,
+            voterProfile.hasVoted,
+            voterProfile.hasVoted ? voterProfile.vote : 0
+        );
     }
 
     // Function to cast a vote
