@@ -67,6 +67,11 @@ contract BlockchainVoting {
         admin = msg.sender;
     }
 
+    // Do not accept any payment to prevent locked eth cases on smart contract
+    receive() external payable {
+        revert("This contract does not accept Ether");
+    }
+
     // Function to create a new election
     function createElection(
         string memory name,
@@ -104,6 +109,27 @@ contract BlockchainVoting {
         election.voterAddresses.push(voter); // Store the voter's address
 
         emit VoterRegistered(electionId, voter);
+    }
+
+    // Function to register multiple voters in a single transaction to reduce amount of eth spent
+    function registerMultipleVoters(
+        uint electionId,
+        address[] memory voters
+    ) public onlyAdmin electionExists(electionId) {
+        Election storage election = elections[electionId];
+
+        for (uint i = 0; i < voters.length; i++) {
+            address voter = voters[i];
+            require(
+                !election.voters[voter].isRegistered,
+                "Voter is already registered"
+            );
+
+            election.voters[voter].isRegistered = true;
+            election.voterAddresses.push(voter); // Store the voter's address
+
+            emit VoterRegistered(electionId, voter); // Emit event for each registered voter
+        }
     }
 
     // Function to get the list of voters for an election

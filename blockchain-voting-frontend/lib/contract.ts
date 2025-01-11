@@ -1,8 +1,6 @@
 import { ethers } from 'ethers';
-import type { Contract } from 'ethers';
-// If you have a generated type from TypeChain, you can import it here, e.g.:
-// import type { VotingContract } from '@/lib/types';
-import contractJson from '@/contracts/BlockchainVoting.json'; // path to your compiled ABI
+import { BlockchainVoting } from '@/contracts/types/BlockchainVoting';
+import contractJson from '@/contracts/Abi/BlockchainVoting.json'; // path to your compiled ABI
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 
@@ -22,11 +20,9 @@ export function getProvider() {
     return new ethers.BrowserProvider(ethereum);
 }
 
-export async function getContract(): Promise<Contract> {
+export async function getContract(): Promise<BlockchainVoting> {
     const provider = getProvider();
     const signer = await provider.getSigner();
 
-    // If you have a type from TypeChain:
-    // return new ethers.Contract(CONTRACT_ADDRESS, votingAbi, signer) as VotingContract;
-    return new ethers.Contract(CONTRACT_ADDRESS, contractJson.abi, signer);
+    return new ethers.Contract(CONTRACT_ADDRESS, contractJson.abi, signer) as any as BlockchainVoting;
 }

@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import { userStore } from '@/store/userStore';
+import { UserStore } from '@/store/userStore';
 
 export function useConnectWallet() {
     const [connected, setConnected] = useState<boolean>(false);
@@ -33,8 +33,8 @@ export function useConnectWallet() {
             setError('');
 
             // If you want to store it in a global store (e.g., userStore), do something like:
-            userStore.address = userAddr;
-            userStore.isConnected = true;
+            UserStore.setAddress(userAddr);
+            UserStore.setIsConnected(true);
         } catch (err: any) {
             setError(err.message || 'Failed to connect wallet.');
         }

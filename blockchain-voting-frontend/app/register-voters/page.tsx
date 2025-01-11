@@ -1,33 +1,33 @@
-// app/register-voter/page.tsx
+// app/register-voters/page.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { useRegisterVoter } from '@/hooks/useRegisterVoter';
+import { useRegisterMultipleVoters } from '@/hooks/useRegisterMultipleVoters';
 import { withAdminAuth } from '@/context/withAdminAuth';
 import { TextField, Button, Alert, Typography, Box } from '@mui/material';
 
-const RegisterVoterPage: React.FC = () => {
+const RegisterMultipleVotersPage: React.FC = () => {
     const [electionId, setElectionId] = useState<number>(0);
-    const [voterAddress, setVoterAddress] = useState('');
-
-    const { registerVoter, loading, error } = useRegisterVoter();
+    const [voters, setVoters] = useState<string>(''); // Comma-separated list of addresses
+    const { registerMultipleVoters, loading, error } =
+        useRegisterMultipleVoters();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!electionId || !voterAddress) return;
-        await registerVoter({ electionId, voter: voterAddress });
+        const voterAddresses = voters.split(',').map((v) => v.trim());
+        await registerMultipleVoters({ electionId, voters: voterAddresses });
     };
 
     return (
         <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
             <Box
-                className='bg-white p-8 rounded-lg shadow-lg max-w-md w-full'
+                className='bg-white p-8 rounded-lg shadow-lg max-w-lg w-full'
                 display='flex'
                 flexDirection='column'
                 alignItems='center'
             >
                 <Typography variant='h4' gutterBottom color='primary'>
-                    Register Voter (Admin)
+                    Register Multiple Voters
                 </Typography>
                 {error && (
                     <Alert severity='error' className='mb-4'>
@@ -45,11 +45,12 @@ const RegisterVoterPage: React.FC = () => {
                     />
                     <TextField
                         fullWidth
-                        label='Voter Address'
-                        type='text'
-                        placeholder='0x0000...'
-                        value={voterAddress}
-                        onChange={(e) => setVoterAddress(e.target.value)}
+                        label='Voter Addresses (comma-separated)'
+                        multiline
+                        rows={4}
+                        value={voters}
+                        onChange={(e) => setVoters(e.target.value)}
+                        placeholder='0x123..., 0x456..., 0x789...'
                         variant='outlined'
                     />
                     <Button
@@ -59,7 +60,7 @@ const RegisterVoterPage: React.FC = () => {
                         fullWidth
                         disabled={loading}
                     >
-                        {loading ? 'Registering...' : 'Register Voter'}
+                        {loading ? 'Registering...' : 'Register Voters'}
                     </Button>
                 </form>
             </Box>
@@ -67,4 +68,4 @@ const RegisterVoterPage: React.FC = () => {
     );
 };
 
-export default withAdminAuth(RegisterVoterPage);
+export default withAdminAuth(RegisterMultipleVotersPage);

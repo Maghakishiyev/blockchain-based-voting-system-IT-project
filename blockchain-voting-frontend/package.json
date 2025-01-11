@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "sc:types": "typechain --target ethers-v6 --out-dir ./contracts/types './contracts/Abi/*.json'",
+    "sc:api-types": "typechain --target ethers-v6 --out-dir ./contracts/server './contracts/Abi/*.json'",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -11,7 +13,9 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.3.1",
     "@mui/material": "^6.3.1",
+    "@typechain/ethers-v6": "^0.5.1",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "next": "15.1.3",
