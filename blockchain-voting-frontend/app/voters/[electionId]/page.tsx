@@ -23,7 +23,7 @@ const VotersPage: React.FC = () => {
     const { voters, loading, error, refetch } = useGetVoters(electionId);
 
     return (
-        <div className='min-h-screen bg-gray-100 flex flex-col items-center py-10'>
+        <main className='min-h-screen bg-gray-100 flex flex-col items-center py-10'>
             <Box
                 className='bg-white p-8 rounded-lg shadow-lg max-w-lg w-full'
                 display='flex'
@@ -68,7 +68,7 @@ const VotersPage: React.FC = () => {
                     )
                 )}
             </Box>
-        </div>
+        </main>
     );
 };
 

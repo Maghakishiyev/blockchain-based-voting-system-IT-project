@@ -1,69 +1,76 @@
-// components/hoc/withAdminAuth.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserStore } from '@/store/userStore';
-import { getProvider, getContract } from '@/lib/contract';
 import { useSnapshot } from 'valtio';
+import { UserStore } from '@/store/userStore';
+import { useConnectWallet } from '@/hooks/useConnectWallet';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 export function withAdminAuth<T extends {}>(
     WrappedComponent: React.ComponentType<T>
 ) {
-    const AdminAuthenticatedComponent = (props: T) => {
-        const { isConnected, address } = useSnapshot(UserStore.state);
-        const [checkingAuth, setCheckingAuth] = useState(true);
-        const [isAdmin, setIsAdmin] = useState(false);
+    const AdminAuthenticatedComponent: React.FC<T> = (props) => {
+        const { isConnected, isAdmin } = useSnapshot(UserStore.state);
+        const [authStatus, setAuthStatus] = useState<
+            'checking' | 'authorized' | 'unauthorized'
+        >('checking');
         const router = useRouter();
+        const { connectWallet } = useConnectWallet();
 
         useEffect(() => {
-            const checkAdminAuth = async () => {
-                try {
-                    if (!isConnected) {
-                        // Attempt to connect wallet if not already connected
-                        const provider = getProvider();
-                        await provider.send('eth_requestAccounts', []);
-                        const signer = await provider.getSigner();
-                        const userAddress = await signer.getAddress();
+            let isMounted = true; // Prevent state updates if component unmounts
 
-                        // Store user info in userStore
-                        UserStore.setAddress(userAddress);
-                        UserStore.setIsConnected(true);
+            const verifyAdmin = async () => {
+                try {
+                    // Connect wallet if not already connected
+                    if (!isConnected) {
+                        console.log('Connecting wallet...');
+                        await connectWallet();
                     }
 
-                    // Once connected, check if the user is admin
-                    const contract = await getContract();
-                    const adminAddress = await contract.admin();
-
-                    if (
-                        UserStore.state.address?.toLowerCase() ===
-                        adminAddress.toLowerCase()
-                    ) {
-                        setIsAdmin(true);
-                    } else {
-                        setIsAdmin(false);
+                    // Check admin status after wallet is connected
+                    if (UserStore.state.isAdmin && isMounted) {
+                        setAuthStatus('authorized'); // Allow rendering for admins
+                    } else if (isMounted) {
+                        setAuthStatus('unauthorized');
                         router.push('/not-authorized');
                     }
                 } catch (err) {
-                    console.error('Admin check failed:', err);
-                    router.push('/login'); // Redirect if user refuses to connect
-                } finally {
-                    setCheckingAuth(false); // Stop checking auth state
+                    console.error('Error verifying admin access:', err);
+                    if (isMounted) router.push('/login');
                 }
             };
 
-            checkAdminAuth();
-        }, [isConnected, router]);
+            verifyAdmin();
 
-        if (checkingAuth) {
-            return <p>Checking authentication...</p>; // Render a loading state
+            return () => {
+                isMounted = false; // Cleanup to prevent state updates
+            };
+        }, []);
+
+        if (authStatus === 'checking') {
+            // Show loading spinner while verifying admin access
+            return (
+                <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+                    <Box
+                        className='bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center'
+                        display='flex'
+                        flexDirection='column'
+                        alignItems='center'
+                    >
+                        <CircularProgress color='primary' className='mb-4' />
+                        <Typography variant='h5' color='primary'>
+                            Verifying Admin Access...
+                        </Typography>
+                    </Box>
+                </div>
+            );
         }
 
-        if (!isAdmin) {
-            return null; // Render nothing if the user isn't admin (they are redirected)
-        }
-
-        return <WrappedComponent {...props} />;
+        return authStatus === 'authorized' ? (
+            <WrappedComponent {...props} />
+        ) : null;
     };
 
     return AdminAuthenticatedComponent;

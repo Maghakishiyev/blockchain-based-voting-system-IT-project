@@ -1,8 +1,8 @@
-// hooks/useGetAllElections.ts
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 // Minimal structure for an Election
 export interface ElectionData {
@@ -14,30 +14,33 @@ export interface ElectionData {
 }
 
 export function useGetAllElections() {
+    const { contract } = useSnapshot(UserStore.state);
     const [elections, setElections] = useState<ElectionData[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const fetchAll = async () => {
+        setError('');
+
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
-            const contract = await getContract();
 
-            // 1) Get the number of elections
+            // Get the number of elections
             const countBN = await contract.electionCounter();
             const count = Number(countBN);
 
             const allElections: ElectionData[] = [];
 
-            // 2) Loop through all election IDs
+            // Loop through all election IDs
             for (let i = 1; i <= count; i++) {
-                // Because elections is a public mapping, we can read partial struct data by calling contract.elections(i)
-                // This typically returns an array or object with [id, name, startTime, endTime, ???].
-                // The actual shape depends on how your tooling interprets the struct's public fields.
                 const electionStruct = await contract.elections(i);
-                // For example, electionStruct might look like:
-                // [ '1', 'My Election', BigNumber { ... }, BigNumber { ... }, false, ... ]
-                // You may need to adapt based on how ethers returns public structs.
 
                 const electionData: ElectionData = {
                     id: Number(electionStruct.id),
@@ -52,7 +55,8 @@ export function useGetAllElections() {
 
             setElections(allElections);
         } catch (err: any) {
-            setError(err.message);
+            console.error('Error fetching elections:', err);
+            setError(err.message || 'An unexpected error occurred.');
         } finally {
             setLoading(false);
         }
@@ -60,7 +64,6 @@ export function useGetAllElections() {
 
     useEffect(() => {
         fetchAll();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return { elections, loading, error, refetch: fetchAll };

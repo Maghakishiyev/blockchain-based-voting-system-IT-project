@@ -1,4 +1,3 @@
-// hooks/useLogOut.ts
 'use client';
 
 import { useCallback } from 'react';
@@ -9,24 +8,28 @@ export function useLogOut(shouldRedirect?: boolean) {
     const router = useRouter();
 
     const handleLogout = useCallback(() => {
-        // Reset the UserStore state
+        // Reset the global UserStore state
         UserStore.reset();
 
-        // Disconnect wallet (this depends on how the wallet provider handles disconnection)
+        // Disconnect wallet (if supported by the provider)
         if (typeof window !== 'undefined' && (window as any).ethereum) {
             try {
-                (window as any).ethereum.disconnect?.(); // Some providers offer a disconnect method
-                console.log('Wallet disconnected');
+                if ((window as any).ethereum.disconnect) {
+                    (window as any).ethereum.disconnect(); // Some wallet providers offer a `disconnect` method
+                    console.log('Wallet disconnected');
+                }
             } catch (err) {
                 console.error('Error disconnecting wallet:', err);
             }
         }
 
+        // Optionally redirect to the homepage or login page
         if (shouldRedirect) {
             router.replace('/');
         }
+
         console.log('User logged out and state reset');
-    }, [router]);
+    }, [router, shouldRedirect]);
 
     return { handleLogout };
 }

@@ -1,8 +1,8 @@
-// hooks/useGetVoterProfile.ts
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 // Types for clarity
 interface VoterProfile {
@@ -20,6 +20,7 @@ export function useGetVoterProfile({
     electionId,
     voter,
 }: UseGetVoterProfileParams) {
+    const { contract } = useSnapshot(UserStore.state);
     const [profile, setProfile] = useState<VoterProfile>({
         isRegistered: false,
         hasVoted: false,
@@ -29,19 +30,26 @@ export function useGetVoterProfile({
     const [error, setError] = useState('');
 
     const fetchProfile = async () => {
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
-            const contract = await getContract();
             const [isRegistered, hasVoted, vote] =
                 await contract.getVoterProfile(electionId, voter);
 
             setProfile({
                 isRegistered,
                 hasVoted,
-                votedCandidate: vote,
+                votedCandidate: Number(vote),
             });
         } catch (err: any) {
-            setError(err.message);
+            console.error('Error fetching voter profile:', err);
+            setError(err.message || 'An unexpected error occurred.');
         } finally {
             setLoading(false);
         }
@@ -52,7 +60,6 @@ export function useGetVoterProfile({
         if (voter && voter !== '0x0000000000000000000000000000000000000000') {
             fetchProfile();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [electionId, voter]);
 
     return { profile, loading, error, refetch: fetchProfile };

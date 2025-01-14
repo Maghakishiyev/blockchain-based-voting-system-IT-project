@@ -32,6 +32,7 @@ export interface BlockchainVotingInterface extends Interface {
       | "elections"
       | "endElection"
       | "getCandidates"
+      | "getElectionDetails"
       | "getResults"
       | "getVoterProfile"
       | "getVoters"
@@ -67,6 +68,10 @@ export interface BlockchainVotingInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getCandidates",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getElectionDetails",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -110,6 +115,10 @@ export interface BlockchainVotingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getCandidates",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getElectionDetails",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getResults", data: BytesLike): Result;
@@ -286,6 +295,21 @@ export interface BlockchainVoting extends BaseContract {
     "view"
   >;
 
+  getElectionDetails: TypedContractMethod<
+    [electionId: BigNumberish],
+    [
+      [string, bigint, bigint, boolean, string[], bigint[]] & {
+        name: string;
+        startTime: bigint;
+        endTime: bigint;
+        isActive: boolean;
+        candidates: string[];
+        results: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   getResults: TypedContractMethod<
     [electionId: BigNumberish],
     [bigint[]],
@@ -365,6 +389,22 @@ export interface BlockchainVoting extends BaseContract {
   getFunction(
     nameOrSignature: "getCandidates"
   ): TypedContractMethod<[electionId: BigNumberish], [string[]], "view">;
+  getFunction(
+    nameOrSignature: "getElectionDetails"
+  ): TypedContractMethod<
+    [electionId: BigNumberish],
+    [
+      [string, bigint, bigint, boolean, string[], bigint[]] & {
+        name: string;
+        startTime: bigint;
+        endTime: bigint;
+        isActive: boolean;
+        candidates: string[];
+        results: bigint[];
+      }
+    ],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getResults"
   ): TypedContractMethod<[electionId: BigNumberish], [bigint[]], "view">;

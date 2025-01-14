@@ -19,7 +19,7 @@ const RegisterMultipleVotersPage: React.FC = () => {
     };
 
     return (
-        <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+        <main className='min-h-screen bg-gray-100 flex items-center gap-6 justify-center'>
             <Box
                 className='bg-white p-8 rounded-lg shadow-lg max-w-lg w-full'
                 display='flex'
@@ -64,7 +64,7 @@ const RegisterMultipleVotersPage: React.FC = () => {
                     </Button>
                 </form>
             </Box>
-        </div>
+        </main>
     );
 };
 

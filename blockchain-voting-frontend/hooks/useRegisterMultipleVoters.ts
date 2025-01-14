@@ -1,8 +1,8 @@
-// hooks/useRegisterMultipleVoters.ts
 'use client';
 
 import { useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 interface RegisterMultipleVotersParams {
     electionId: number;
@@ -10,6 +10,7 @@ interface RegisterMultipleVotersParams {
 }
 
 export function useRegisterMultipleVoters() {
+    const { contract } = useSnapshot(UserStore.state);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,17 +18,24 @@ export function useRegisterMultipleVoters() {
         electionId,
         voters,
     }: RegisterMultipleVotersParams) => {
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
-            const contract = await getContract();
             const tx = await contract.registerMultipleVoters(
                 electionId,
                 voters
             );
             await tx.wait();
         } catch (err: any) {
+            console.error('Error registering multiple voters:', err);
             setError(err.message || 'Failed to register multiple voters');
         } finally {
             setLoading(false);

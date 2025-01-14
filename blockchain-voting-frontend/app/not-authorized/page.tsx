@@ -13,7 +13,7 @@ export default function NotAuthorizedPage() {
     };
 
     return (
-        <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+        <main className='min-h-screen w-full h-full bg-gray-100 gap-6 flex items-center justify-center'>
             <Box
                 className='bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center'
                 display='flex'
@@ -39,6 +39,6 @@ export default function NotAuthorizedPage() {
                     Go Back to Home
                 </Button>
             </Box>
-        </div>
+        </main>
     );
 }

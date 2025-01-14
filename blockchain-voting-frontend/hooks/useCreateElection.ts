@@ -1,8 +1,8 @@
-// hooks/useCreateElection.ts
 'use client';
 
 import { useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 interface CreateElectionParams {
     name: string;
@@ -12,13 +12,20 @@ interface CreateElectionParams {
 }
 
 export function useCreateElection() {
+    const { contract } = useSnapshot(UserStore.state);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const createElection = async (params: CreateElectionParams) => {
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
-            const contract = await getContract();
             const tx = await contract.createElection(
                 params.name,
                 params.startTime,
@@ -27,7 +34,8 @@ export function useCreateElection() {
             );
             await tx.wait();
         } catch (err: any) {
-            setError(err.message);
+            console.error('Error creating election:', err);
+            setError(err.message || 'An unexpected error occurred.');
         } finally {
             setLoading(false);
         }

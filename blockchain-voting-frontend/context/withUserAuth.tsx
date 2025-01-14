@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { UserStore } from '@/store/userStore';
 import { getProvider } from '@/lib/contract';
 import { useSnapshot } from 'valtio';
+import { useConnectWallet } from '@/hooks/useConnectWallet';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 export function withUserAuth<T extends {}>(
     WrappedComponent: React.ComponentType<T>
@@ -14,30 +16,17 @@ export function withUserAuth<T extends {}>(
         const { isConnected, address } = useSnapshot(UserStore.state);
         const [checkingAuth, setCheckingAuth] = useState(true);
         const router = useRouter();
+        const { connectWallet } = useConnectWallet();
 
         useEffect(() => {
             const checkAuth = async () => {
-                if (isConnected && address) {
+                if (!isConnected) {
+                    setCheckingAuth(true);
+                    connectWallet()
+                        .then(() => setCheckingAuth(false))
+                        .catch(() => router.push('/login'));
+                } else {
                     setCheckingAuth(false);
-                    return;
-                }
-
-                // Attempt to connect wallet
-                try {
-                    const provider = getProvider();
-                    await provider.send('eth_requestAccounts', []);
-                    const signer = await provider.getSigner();
-                    const userAddress = await signer.getAddress();
-
-                    // Store user info in userStore
-                    UserStore.setAddress(userAddress);
-                    UserStore.setIsConnected(true);
-
-                    setCheckingAuth(false);
-                } catch (err) {
-                    console.error('Wallet connection failed:', err);
-                    // Redirect to login page
-                    router.push('/login');
                 }
             };
 
@@ -45,7 +34,21 @@ export function withUserAuth<T extends {}>(
         }, [isConnected, address, router]);
 
         if (checkingAuth) {
-            return <p>Checking authentication...</p>;
+            return (
+                <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+                    <Box
+                        className='bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center'
+                        display='flex'
+                        flexDirection='column'
+                        alignItems='center'
+                    >
+                        <CircularProgress color='primary' className='mb-4' />
+                        <Typography variant='h5' color='primary'>
+                            Checking Authentication...
+                        </Typography>
+                    </Box>
+                </div>
+            );
         }
 
         return <WrappedComponent {...props} />;

@@ -38,7 +38,7 @@ const VotePage: React.FC = () => {
     };
 
     return (
-        <div className='min-h-screen bg-gray-100 flex flex-col items-center py-10'>
+        <main className='min-h-screen bg-gray-100 flex flex-col gap-6 items-center py-10'>
             <Box
                 className='bg-white p-8 rounded-lg shadow-lg max-w-lg w-full'
                 display='flex'
@@ -96,7 +96,7 @@ const VotePage: React.FC = () => {
                     </Button>
                 </form>
             </Box>
-        </div>
+        </main>
     );
 };
 

@@ -1,21 +1,29 @@
-// hooks/useEndElection.ts
 'use client';
 
 import { useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 export function useEndElection() {
+    const { contract } = useSnapshot(UserStore.state);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const endElection = async (electionId: number) => {
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
-            const contract = await getContract();
             const tx = await contract.endElection(electionId);
             await tx.wait();
         } catch (err: any) {
-            setError(err.message);
+            console.error('Error ending election:', err);
+            setError(err.message || 'An unexpected error occurred.');
         } finally {
             setLoading(false);
         }

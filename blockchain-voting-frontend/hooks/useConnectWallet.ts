@@ -4,10 +4,10 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
 import { UserStore } from '@/store/userStore';
+import { BlockchainVoting } from '@/contracts/server';
+import BlockchainVotingContract from '@/contracts/Abi/BlockchainVoting.json';
 
 export function useConnectWallet() {
-    const [connected, setConnected] = useState<boolean>(false);
-    const [account, setAccount] = useState<string>('');
     const [error, setError] = useState<string>('');
 
     const connectWallet = async () => {
@@ -28,22 +28,33 @@ export function useConnectWallet() {
             const signer = await provider.getSigner();
             const userAddr = await signer.getAddress();
 
-            setAccount(userAddr);
-            setConnected(true);
-            setError('');
+            const contract = new ethers.Contract(
+                process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '',
+                BlockchainVotingContract.abi,
+                signer
+            ) as any as BlockchainVoting;
 
-            // If you want to store it in a global store (e.g., userStore), do something like:
+            const admin = await contract.admin();
+
+            // Store in global state
+            UserStore.setIsAdmin(
+                userAddr.toLowerCase() === admin.toLowerCase()
+            );
+            UserStore.setProvider(provider);
+            UserStore.setSigner(signer);
+            UserStore.setContract(contract);
             UserStore.setAddress(userAddr);
             UserStore.setIsConnected(true);
+
+            // Check if user is admin
         } catch (err: any) {
+            console.error('Error connecting wallet:', err);
             setError(err.message || 'Failed to connect wallet.');
         }
     };
 
     return {
         connectWallet,
-        connected,
-        account,
         error,
     };
 }

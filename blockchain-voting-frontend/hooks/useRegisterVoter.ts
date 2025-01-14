@@ -1,8 +1,8 @@
-// hooks/useRegisterVoter.ts
 'use client';
 
 import { useState } from 'react';
-import { getContract } from '@/lib/contract';
+import { useSnapshot } from 'valtio';
+import UserStore from '@/store/userStore';
 
 interface RegisterVoterParams {
     electionId: number;
@@ -10,6 +10,7 @@ interface RegisterVoterParams {
 }
 
 export function useRegisterVoter() {
+    const { contract } = useSnapshot(UserStore.state);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -17,13 +18,20 @@ export function useRegisterVoter() {
         electionId,
         voter,
     }: RegisterVoterParams) => {
+        if (!contract) {
+            setError(
+                'Contract is not initialized. Please connect your wallet.'
+            );
+            return;
+        }
+
         try {
             setLoading(true);
-            const contract = await getContract();
             const tx = await contract.registerVoter(electionId, voter);
             await tx.wait();
         } catch (err: any) {
-            setError(err.message);
+            console.error('Error registering voter:', err);
+            setError(err.message || 'Failed to register voter.');
         } finally {
             setLoading(false);
         }

@@ -18,9 +18,11 @@ export default function RootLayout({
         <html lang='en'>
             <body>
                 <MUIProvider>
-                    <Header />
-                    {children}
-                    <Footer />
+                    <div className='h-full min-h-full flex-1 flex flex-col relative overflow-y-auto focus:outline-none'>
+                        <Header />
+                        {children}
+                        <Footer />
+                    </div>
                 </MUIProvider>
             </body>
         </html>
