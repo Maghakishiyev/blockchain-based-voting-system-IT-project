@@ -223,4 +223,37 @@ contract BlockchainVoting {
     ) public view electionExists(electionId) returns (string[] memory) {
         return elections[electionId].candidates;
     }
+
+    function getElectionDetails(
+        uint electionId
+    )
+        public
+        view
+        electionExists(electionId)
+        returns (
+            string memory name,
+            uint startTime,
+            uint endTime,
+            bool isActive,
+            string[] memory candidates,
+            uint[] memory results
+        )
+    {
+        Election storage election = elections[electionId];
+
+        // Aggregate vote counts
+        uint[] memory voteCounts = new uint[](election.candidates.length);
+        for (uint i = 0; i < election.candidates.length; i++) {
+            voteCounts[i] = election.votes[i];
+        }
+
+        return (
+            election.name,
+            election.startTime,
+            election.endTime,
+            election.isActive,
+            election.candidates,
+            voteCounts
+        );
+    }
 }
