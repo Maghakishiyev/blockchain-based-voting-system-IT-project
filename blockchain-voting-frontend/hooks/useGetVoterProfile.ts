@@ -50,6 +50,7 @@ export function useGetVoterProfile({
         } catch (err: any) {
             console.error('Error fetching voter profile:', err);
             setError(err.message || 'An unexpected error occurred.');
+            throw err
         } finally {
             setLoading(false);
         }

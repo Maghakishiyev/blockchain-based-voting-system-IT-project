@@ -256,4 +256,38 @@ contract BlockchainVoting {
             voteCounts
         );
     }
+
+    function getVotersWithDetails(
+        uint electionId
+    )
+        public
+        view
+        electionExists(electionId)
+        returns (
+            address[] memory voterAddresses,
+            bool[] memory isRegisteredArray,
+            bool[] memory hasVotedArray,
+            uint[] memory votesArray
+        )
+    {
+        Election storage election = elections[electionId];
+        uint voterCount = election.voterAddresses.length;
+
+        voterAddresses = new address[](voterCount);
+        isRegisteredArray = new bool[](voterCount);
+        hasVotedArray = new bool[](voterCount);
+        votesArray = new uint[](voterCount);
+
+        for (uint i = 0; i < voterCount; i++) {
+            address voterAddress = election.voterAddresses[i];
+            Voter storage voter = election.voters[voterAddress];
+
+            voterAddresses[i] = voterAddress;
+            isRegisteredArray[i] = voter.isRegistered;
+            hasVotedArray[i] = voter.hasVoted;
+            votesArray[i] = voter.vote;
+        }
+
+        return (voterAddresses, isRegisteredArray, hasVotedArray, votesArray);
+    }
 }

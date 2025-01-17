@@ -20,6 +20,7 @@ export function useLogOut(shouldRedirect?: boolean) {
                 }
             } catch (err) {
                 console.error('Error disconnecting wallet:', err);
+                throw err
             }
         }
 

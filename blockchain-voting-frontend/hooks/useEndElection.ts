@@ -24,6 +24,7 @@ export function useEndElection() {
         } catch (err: any) {
             console.error('Error ending election:', err);
             setError(err.message || 'An unexpected error occurred.');
+            throw err;
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,3 @@
-// app/voters/[electionId]/page.tsx
 'use client';
 
 import React from 'react';
@@ -11,9 +10,13 @@ import {
     Box,
     CircularProgress,
     Alert,
-    List,
-    ListItem,
-    ListItemText,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
 } from '@mui/material';
 
 const VotersPage: React.FC = () => {
@@ -23,46 +26,72 @@ const VotersPage: React.FC = () => {
     const { voters, loading, error, refetch } = useGetVoters(electionId);
 
     return (
-        <main className='min-h-screen bg-gray-100 flex flex-col items-center py-10'>
-            <Box
-                className='bg-white p-8 rounded-lg shadow-lg max-w-lg w-full'
-                display='flex'
-                flexDirection='column'
-                alignItems='center'
-            >
-                <Typography variant='h4' gutterBottom color='primary'>
-                    Voters for Election {electionId}
+        <main className="min-h-full h-full flex-grow bg-gray-100 flex flex-col items-center py-10 gap-6">
+            <Box className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full">
+                <Typography variant="h4" gutterBottom color="primary" align="center">
+                    Voters for Election #{electionId}
                 </Typography>
 
+                {/* Alerts */}
                 {loading && (
-                    <CircularProgress color='primary' className='mb-4' />
+                    <Alert severity="info" className="mb-4">
+                        Fetching voters data...
+                    </Alert>
                 )}
                 {error && (
-                    <Alert severity='error' className='mb-4'>
+                    <Alert severity="error" className="mb-4">
                         {error}
                     </Alert>
                 )}
 
-                <Button
-                    variant='contained'
-                    color='primary'
-                    onClick={refetch}
-                    className='mb-4'
-                >
-                    Refetch Voters
-                </Button>
+                {/* Refetch Button */}
+                <Box display="flex" justifyContent="center" className="mb-4">
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={refetch}
+                        disabled={loading}
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Refetch Voters'}
+                    </Button>
+                </Box>
 
+                {/* Voters Table */}
                 {voters.length > 0 ? (
-                    <List className='w-full'>
-                        {voters.map((voter, index) => (
-                            <ListItem key={index} className='border-b'>
-                                <ListItemText primary={voter} />
-                            </ListItem>
-                        ))}
-                    </List>
+                    <TableContainer component={Paper} className="mt-4">
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell align="center">#</TableCell>
+                                    <TableCell align="left">Voter Address</TableCell>
+                                    <TableCell align="center">Registered</TableCell>
+                                    <TableCell align="center">Voted</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {voters.map((voter, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell align="center">{index + 1}</TableCell>
+                                        <TableCell align="left">{voter.address}</TableCell>
+                                        <TableCell align="center">
+                                            {voter.isRegistered ? 'Yes' : 'No'}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {voter.hasVoted ? 'Yes' : 'No'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 ) : (
                     !loading && (
-                        <Typography variant='body1' color='textSecondary'>
+                        <Typography
+                            variant="body1"
+                            color="textSecondary"
+                            align="center"
+                            className="mt-4"
+                        >
                             No voters found for this election.
                         </Typography>
                     )

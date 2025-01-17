@@ -3,7 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useGetElectionDetails } from '@/hooks/useGetElectionDetails';
-import { CircularProgress, Alert, Typography, Box, Paper } from '@mui/material';
+import {
+    CircularProgress,
+    Alert,
+    Typography,
+    Box,
+    Paper,
+    Button,
+} from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
 import { withUserAuth } from '@/context/withUserAuth';
@@ -16,6 +23,10 @@ const ResultsPage: React.FC = () => {
         useGetElectionDetails(electionIdNumber);
 
     const [chartData, setChartData] = useState<any>(null);
+    const [alert, setAlert] = useState<{
+        type: 'success' | 'error' | 'info' | null;
+        message: string;
+    }>({ type: null, message: '' });
 
     useEffect(() => {
         if (details) {
@@ -24,7 +35,6 @@ const ResultsPage: React.FC = () => {
                 0
             );
 
-            // Prepare chart data
             setChartData({
                 labels: details.candidates,
                 datasets: [
@@ -43,105 +53,159 @@ const ResultsPage: React.FC = () => {
         }
     }, [details]);
 
-    if (loading) {
-        return (
-            <main className='min-h-screen bg-gray-100 flex items-center justify-center'>
-                <CircularProgress />
-            </main>
-        );
-    }
+    const formatDateTime = (timestamp: number) => {
+        return new Date(timestamp * 1000).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false, // 24-hour format
+        });
+    };
 
-    if (error) {
-        return (
-            <main className='min-h-screen bg-gray-100 flex items-center justify-center'>
-                <Alert severity='error'>{error}</Alert>
-            </main>
-        );
-    }
-
-    if (!details) {
-        return (
-            <main className='min-h-screen bg-gray-100 flex items-center justify-center'>
-                <Typography variant='h5' color='textSecondary'>
-                    No election details found.
-                </Typography>
-            </main>
-        );
-    }
+    const handleRefetch = async () => {
+        try {
+            setAlert({ type: 'info', message: 'Refreshing data...' });
+            await refetch();
+            setAlert({
+                type: 'success',
+                message: 'Data refreshed successfully!',
+            });
+        } catch {
+            setAlert({ type: 'error', message: 'Failed to refresh data.' });
+        }
+    };
 
     return (
-        <main className='min-h-screen bg-gray-100 py-10'>
-            <Paper className='max-w-4xl mx-auto p-8 rounded-lg shadow-lg'>
+        <main className='min-h-screen bg-gray-100 py-10 flex flex-col items-center'>
+            <Box className='w-full max-w-5xl px-4'>
+                {/* Page Title */}
                 <Typography
                     variant='h4'
                     color='primary'
                     className='text-center mb-6'
                 >
-                    Election Results: {details.name}
+                    Election Results
                 </Typography>
-                <Box className='mb-6'>
-                    <Typography variant='h6'>
-                        Election ID: {electionId}
-                    </Typography>
-                    <Typography variant='body1'>
-                        Start Time:{' '}
-                        {new Date(details.startTime * 1000).toLocaleString()}
-                    </Typography>
-                    <Typography variant='body1'>
-                        End Time:{' '}
-                        {new Date(details.endTime * 1000).toLocaleString()}
-                    </Typography>
-                    <Typography variant='body1'>
-                        Status:{' '}
-                        <strong
-                            style={{
-                                color: details.isActive ? 'green' : 'red',
-                            }}
-                        >
-                            {details.isActive ? 'Active' : 'Ended'}
-                        </strong>
-                    </Typography>
-                </Box>
 
-                <Typography
-                    variant='h5'
-                    color='primary'
-                    className='text-center mb-4'
-                >
-                    Candidate Votes
-                </Typography>
+                {/* Display Alerts */}
+                {alert.type && (
+                    <Alert
+                        severity={alert.type}
+                        className='mb-4 w-full'
+                        onClose={() => setAlert({ type: null, message: '' })}
+                    >
+                        {alert.message}
+                    </Alert>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                    <Box className='flex justify-center'>
+                        <CircularProgress color='primary' />
+                    </Box>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <Alert severity='error' className='mb-4'>
+                        {error}
+                    </Alert>
+                )}
+
+                {/* Election Details */}
+                {!loading && !error && details && (
+                    <Paper className='p-6 rounded-lg shadow-lg mb-6'>
+                        <Typography
+                            variant='h5'
+                            className='mb-4'
+                            color='textPrimary'
+                        >
+                            Election: {details.name}
+                        </Typography>
+                        <Typography variant='body1' color='textSecondary'>
+                            <strong>Election ID:</strong> {electionId}
+                        </Typography>
+                        <Typography variant='body1' color='textSecondary'>
+                            <strong>Start Time:</strong>{' '}
+                            {formatDateTime(details.startTime)}
+                        </Typography>
+                        <Typography variant='body1' color='textSecondary'>
+                            <strong>End Time:</strong>{' '}
+                            {formatDateTime(details.endTime)}
+                        </Typography>
+                        <Typography
+                            variant='body1'
+                            color={details.isActive ? 'success.main' : 'error'}
+                        >
+                            <strong>Status:</strong>{' '}
+                            {details.isActive ? 'Active' : 'Ended'}
+                        </Typography>
+                    </Paper>
+                )}
+
+                {/* Chart Section */}
                 {chartData ? (
-                    <Bar
-                        data={chartData}
-                        options={{
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'top',
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: (tooltipItem) => {
-                                            const voteCount =
-                                                tooltipItem.raw as number;
-                                            const percentage =
-                                                chartData.percentageData[
-                                                    tooltipItem.dataIndex
-                                                ];
-                                            return `${voteCount} votes (${percentage}%)`;
+                    <Box className='p-6 rounded-lg shadow-lg bg-white mb-6'>
+                        <Typography
+                            variant='h5'
+                            color='primary'
+                            className='text-center mb-4'
+                        >
+                            Candidate Votes
+                        </Typography>
+                        <Bar
+                            data={chartData}
+                            options={{
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top',
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (tooltipItem) => {
+                                                const voteCount =
+                                                    tooltipItem.raw as number;
+                                                const percentage =
+                                                    chartData.percentageData[
+                                                        tooltipItem.dataIndex
+                                                    ];
+                                                return `${voteCount} votes (${percentage}%)`;
+                                            },
                                         },
                                     },
                                 },
-                            },
-                        }}
-                    />
+                            }}
+                        />
+                    </Box>
                 ) : (
-                    <Typography className='text-center'>
-                        No results available for this election.
-                    </Typography>
+                    !loading && (
+                        <Typography
+                            variant='body1'
+                            color='textSecondary'
+                            className='text-center'
+                        >
+                            No results available for this election.
+                        </Typography>
+                    )
                 )}
-            </Paper>
+
+                {/* Refetch Button */}
+                {!loading && !error && (
+                    <Box className='flex justify-center mt-6'>
+                        <Button
+                            variant='contained'
+                            color='primary'
+                            onClick={handleRefetch}
+                        >
+                            Refresh Data
+                        </Button>
+                    </Box>
+                )}
+            </Box>
         </main>
     );
 };

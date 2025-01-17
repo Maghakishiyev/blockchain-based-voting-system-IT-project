@@ -6,7 +6,7 @@ import { withUserAuth } from '@/context/withUserAuth';
 
 const HomePage: React.FC = () => {
     return (
-        <main className='min-h-screen bg-gray-100 flex flex-col items-center gap-8 justify-center py-10'>
+        <main className='min-h-full bg-gray-100 flex flex-col items-center gap-8 justify-center py-10'>
             <Box
                 className='bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-3xl w-full'
                 display='flex'

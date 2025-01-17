@@ -25,6 +25,7 @@ export function useGetCandidates(electionId: number) {
         } catch (err: any) {
             console.error('Error fetching candidates:', err);
             setError(err.message || 'An unexpected error occurred.');
+            throw err
         } finally {
             setLoading(false);
         }

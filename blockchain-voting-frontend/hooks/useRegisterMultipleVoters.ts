@@ -37,6 +37,7 @@ export function useRegisterMultipleVoters() {
         } catch (err: any) {
             console.error('Error registering multiple voters:', err);
             setError(err.message || 'Failed to register multiple voters');
+            throw err
         } finally {
             setLoading(false);
         }

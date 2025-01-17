@@ -27,13 +27,17 @@ const EndElectionPage: React.FC = () => {
         elections,
         loading: electionsLoading,
         error: electionsError,
+        refetch,
     } = useGetAllElections();
 
     const [filteredElections, setFilteredElections] = useState<any[]>([]);
     const [selectedElection, setSelectedElection] = useState<number | null>(
         null
     );
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [alert, setAlert] = useState<{
+        type: 'success' | 'error' | 'info' | null;
+        message: string;
+    }>({ type: null, message: '' });
 
     // Filter elections with a past end date
     useEffect(() => {
@@ -50,23 +54,35 @@ const EndElectionPage: React.FC = () => {
         e.preventDefault();
 
         if (!selectedElection) {
-            setSuccessMessage(null);
+            setAlert({
+                type: 'error',
+                message: 'Please select an election to end.',
+            });
             return;
         }
 
         try {
+            setAlert({ type: 'info', message: 'Transaction in progress...' });
             await endElection(selectedElection);
-            setSuccessMessage(
-                `Election #${selectedElection} has been successfully ended.`
-            );
+            setAlert({
+                type: 'success',
+                message: `Election #${selectedElection} has been successfully ended.`,
+            });
             setSelectedElection(null); // Clear selection
-        } catch {
-            setSuccessMessage(null); // Clear success message on failure
+            refetch();
+        } catch (error: any) {
+            setAlert({
+                type: 'error',
+                message:
+                    error.message ||
+                    endingError ||
+                    'An unexpected error occurred.',
+            });
         }
     };
 
     return (
-        <main className='min-h-screen bg-gray-100 flex flex-col items-center py-10 gap-6'>
+        <main className='min-h-full h-full flex-grow bg-gray-100 flex flex-col items-center py-10 gap-6'>
             <Card className='shadow-lg max-w-xl w-full'>
                 <CardContent>
                     <Typography
@@ -76,6 +92,19 @@ const EndElectionPage: React.FC = () => {
                     >
                         End an Election
                     </Typography>
+
+                    {alert.type && (
+                        <Alert
+                            severity={alert.type}
+                            className='mb-4'
+                            onClose={() =>
+                                setAlert({ type: null, message: '' })
+                            }
+                        >
+                            {alert.message}
+                        </Alert>
+                    )}
+
                     {electionsLoading ? (
                         <div className='flex justify-center'>
                             <CircularProgress />
@@ -99,39 +128,43 @@ const EndElectionPage: React.FC = () => {
                                             Number(e.target.value)
                                         )
                                     }
+                                    disabled={filteredElections.length === 0}
                                 >
-                                    {filteredElections.map((election) => (
-                                        <MenuItem
-                                            key={election.id}
-                                            value={election.id}
-                                        >
-                                            {election.name} (ID: {election.id})
+                                    {filteredElections.length > 0 ? (
+                                        filteredElections.map((election) => (
+                                            <MenuItem
+                                                key={election.id}
+                                                value={election.id}
+                                            >
+                                                {election.name} (ID:{' '}
+                                                {election.id})
+                                            </MenuItem>
+                                        ))
+                                    ) : (
+                                        <MenuItem disabled>
+                                            No elections available to end.
                                         </MenuItem>
-                                    ))}
+                                    )}
                                 </Select>
                             </FormControl>
+
                             {filteredElections.length === 0 && (
-                                <Typography
-                                    variant='body2'
-                                    color='textSecondary'
-                                    className='text-center'
-                                >
-                                    No past elections available to end.
-                                </Typography>
-                            )}
-                            {endingError && (
-                                <Alert severity='error'>{endingError}</Alert>
-                            )}
-                            {successMessage && (
-                                <Alert severity='success'>
-                                    {successMessage}
+                                <Alert severity='info'>
+                                    No elections are available to end at the
+                                    moment.
                                 </Alert>
                             )}
+
                             <Button
                                 type='submit'
                                 variant='contained'
                                 color='primary'
-                                disabled={endingLoading || !selectedElection}
+                                fullWidth
+                                disabled={
+                                    endingLoading ||
+                                    filteredElections.length === 0 ||
+                                    !selectedElection
+                                }
                             >
                                 {endingLoading ? (
                                     <CircularProgress

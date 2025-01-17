@@ -28,6 +28,7 @@ export function useGetResults(electionId: number) {
         } catch (err: any) {
             console.error('Error fetching results:', err);
             setError(err.message || 'An unexpected error occurred.');
+            throw err
         } finally {
             setLoading(false);
         }

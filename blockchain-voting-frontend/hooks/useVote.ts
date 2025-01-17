@@ -29,6 +29,7 @@ export function useVote() {
         } catch (err: any) {
             console.error('Error casting vote:', err);
             setError(err.message || 'Failed to cast vote.');
+            throw err
         } finally {
             setLoading(false);
         }

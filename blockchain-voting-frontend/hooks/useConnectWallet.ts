@@ -8,6 +8,7 @@ import { BlockchainVoting } from '@/contracts/server';
 import BlockchainVotingContract from '@/contracts/Abi/BlockchainVoting.json';
 
 export function useConnectWallet() {
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
 
     const connectWallet = async () => {
@@ -17,6 +18,7 @@ export function useConnectWallet() {
         }
 
         try {
+            setLoading(true);
             // Request account access from MetaMask
             await (window as any).ethereum.request({
                 method: 'eth_requestAccounts',
@@ -50,11 +52,15 @@ export function useConnectWallet() {
         } catch (err: any) {
             console.error('Error connecting wallet:', err);
             setError(err.message || 'Failed to connect wallet.');
+            throw err;
+        } finally {
+            setLoading(true);
         }
     };
 
     return {
         connectWallet,
         error,
+        loading,
     };
 }

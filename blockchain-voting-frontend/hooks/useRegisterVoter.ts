@@ -32,6 +32,7 @@ export function useRegisterVoter() {
         } catch (err: any) {
             console.error('Error registering voter:', err);
             setError(err.message || 'Failed to register voter.');
+            throw err;
         } finally {
             setLoading(false);
         }

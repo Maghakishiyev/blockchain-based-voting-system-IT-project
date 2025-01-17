@@ -36,6 +36,7 @@ export interface BlockchainVotingInterface extends Interface {
       | "getResults"
       | "getVoterProfile"
       | "getVoters"
+      | "getVotersWithDetails"
       | "registerMultipleVoters"
       | "registerVoter"
       | "vote"
@@ -87,6 +88,10 @@ export interface BlockchainVotingInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getVotersWithDetails",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "registerMultipleVoters",
     values: [BigNumberish, AddressLike[]]
   ): string;
@@ -127,6 +132,10 @@ export interface BlockchainVotingInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getVoters", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getVotersWithDetails",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "registerMultipleVoters",
     data: BytesLike
@@ -328,6 +337,19 @@ export interface BlockchainVoting extends BaseContract {
     "view"
   >;
 
+  getVotersWithDetails: TypedContractMethod<
+    [electionId: BigNumberish],
+    [
+      [string[], boolean[], boolean[], bigint[]] & {
+        voterAddresses: string[];
+        isRegisteredArray: boolean[];
+        hasVotedArray: boolean[];
+        votesArray: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   registerMultipleVoters: TypedContractMethod<
     [electionId: BigNumberish, voters: AddressLike[]],
     [void],
@@ -418,6 +440,20 @@ export interface BlockchainVoting extends BaseContract {
   getFunction(
     nameOrSignature: "getVoters"
   ): TypedContractMethod<[electionId: BigNumberish], [string[]], "view">;
+  getFunction(
+    nameOrSignature: "getVotersWithDetails"
+  ): TypedContractMethod<
+    [electionId: BigNumberish],
+    [
+      [string[], boolean[], boolean[], bigint[]] & {
+        voterAddresses: string[];
+        isRegisteredArray: boolean[];
+        hasVotedArray: boolean[];
+        votesArray: bigint[];
+      }
+    ],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "registerMultipleVoters"
   ): TypedContractMethod<
