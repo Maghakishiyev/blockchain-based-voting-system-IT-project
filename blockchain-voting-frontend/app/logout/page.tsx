@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLogOut } from '@/hooks/useLogOut';
-import { CircularProgress, Typography, Box, Alert, Paper } from '@mui/material';
+import { CircularProgress, Typography, Alert, Paper } from '@mui/material';
 
 export default function LogoutPage() {
     const { handleLogout } = useLogOut();
@@ -28,6 +28,7 @@ export default function LogoutPage() {
                     router.push('/login');
                 }, 1500);
             } catch (err) {
+                console.log('Caught an error', err);
                 setAlert({
                     type: 'error',
                     message:

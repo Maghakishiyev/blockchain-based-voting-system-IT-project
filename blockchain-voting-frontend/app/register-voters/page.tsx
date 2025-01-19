@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRegisterMultipleVoters } from '@/hooks/useRegisterMultipleVoters';
 import { withAdminAuth } from '@/context/withAdminAuth';
-import { useGetAllElections } from '@/hooks/useGetAllElections';
+import { useGetPaginatedElections } from '@/hooks/useGetPaginatedElections';
 import {
     TextField,
     Button,
@@ -16,6 +16,7 @@ import {
     MenuItem,
     Chip,
     CircularProgress,
+    Pagination,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
@@ -25,14 +26,18 @@ const RegisterMultipleVotersPage: React.FC = () => {
         loading: registering,
         error: registerError,
     } = useRegisterMultipleVoters();
+
     const {
         elections,
+        totalElections,
         loading: loadingElections,
         error: electionsError,
-        refetch: refetchElections,
-    } = useGetAllElections();
+        fetchElections,
+    } = useGetPaginatedElections();
 
-    const [activeElections, setActiveElections] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const [selectedElectionId, setSelectedElectionId] = useState<number | ''>(
         ''
     );
@@ -44,14 +49,9 @@ const RegisterMultipleVotersPage: React.FC = () => {
     }>({ type: null, message: '' });
 
     useEffect(() => {
-        if (elections) {
-            const now = Math.floor(Date.now() / 1000); // Current time in seconds
-            const active = elections.filter(
-                (election) => election.isActive && election.endTime > now
-            );
-            setActiveElections(active);
-        }
-    }, [elections]);
+        // Fetch active elections for the current page
+        fetchElections((currentPage - 1) * itemsPerPage, itemsPerPage, 1);
+    }, [currentPage]);
 
     const handleAddVoter = () => {
         const trimmedAddresses = voterInput
@@ -101,8 +101,6 @@ const RegisterMultipleVotersPage: React.FC = () => {
                     registerError ||
                     'An unexpected error occurred.',
             });
-        } finally {
-            refetchElections();
         }
     };
 
@@ -118,7 +116,7 @@ const RegisterMultipleVotersPage: React.FC = () => {
                     Register Multiple Voters
                 </Typography>
 
-                {/* Display alerts */}
+                {/* Display Alerts */}
                 {alert.type && (
                     <Alert
                         severity={alert.type}
@@ -150,15 +148,15 @@ const RegisterMultipleVotersPage: React.FC = () => {
                                 )
                             }
                             disabled={
-                                loadingElections || activeElections.length === 0
+                                loadingElections || elections.length === 0
                             }
                         >
                             {loadingElections ? (
                                 <MenuItem disabled>
                                     <CircularProgress size={24} />
                                 </MenuItem>
-                            ) : activeElections.length > 0 ? (
-                                activeElections.map((election) => (
+                            ) : elections.length > 0 ? (
+                                elections.map((election) => (
                                     <MenuItem
                                         key={election.id}
                                         value={election.id}
@@ -184,15 +182,11 @@ const RegisterMultipleVotersPage: React.FC = () => {
                         variant='outlined'
                         value={voterInput}
                         onChange={(e) => setVoterInput(e.target.value)}
-                        style={{ resize: 'vertical' }}
                         onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 handleAddVoter();
                             }
-                        }}
-                        InputProps={{
-                            style: { resize: 'vertical' }, // Allow vertical resizing
                         }}
                     />
                     <Box className='flex flex-wrap gap-2'>
@@ -226,6 +220,18 @@ const RegisterMultipleVotersPage: React.FC = () => {
                         )}
                     </Button>
                 </form>
+
+                {/* Pagination */}
+                {totalElections > itemsPerPage && (
+                    <Box className='flex justify-center mt-6'>
+                        <Pagination
+                            count={Math.ceil(totalElections / itemsPerPage)}
+                            page={currentPage}
+                            onChange={(_, page) => setCurrentPage(page)}
+                            color='primary'
+                        />
+                    </Box>
+                )}
             </Box>
         </main>
     );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useGetCandidates } from '@/hooks/useGetCandidates';
 import { useVote } from '@/hooks/useVote';
 import { useGetAllElections } from '@/hooks/useGetAllElections';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 
 const VotePage: React.FC = () => {
     const params = useParams();
+    const router = useRouter();
     const electionId = Number(params.electionId);
 
     const {
@@ -127,7 +128,9 @@ const VotePage: React.FC = () => {
                                     : 'Ended or Not Active'
                             }
                             color={
-                                electionDetails?.isActive ? 'success' : 'default'
+                                electionDetails?.isActive
+                                    ? 'success'
+                                    : 'default'
                             }
                             className='mt-2'
                         />
@@ -203,6 +206,17 @@ const VotePage: React.FC = () => {
                         {voteLoading ? 'Submitting Vote...' : 'Submit Vote'}
                     </Button>
                 </form>
+
+                {/* Redirect to Voters Page */}
+                <Button
+                    variant='outlined'
+                    color='primary'
+                    className='mt-4'
+                    fullWidth
+                    onClick={() => router.push(`/voters/${electionId}`)}
+                >
+                    View Voters for This Election
+                </Button>
             </Box>
         </main>
     );

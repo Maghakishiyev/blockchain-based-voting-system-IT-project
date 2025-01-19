@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useGetAllElections } from '@/hooks/useGetAllElections';
-import { withUserAuth } from '@/context/withUserAuth';
+import { useGetPaginatedElections } from '@/hooks/useGetPaginatedElections';
 import {
-    Button,
     CircularProgress,
     Alert,
     Card,
@@ -13,90 +11,95 @@ import {
     Typography,
     Box,
     Grid,
+    Tabs,
+    Tab,
+    TextField,
+    Pagination,
 } from '@mui/material';
 import { format } from 'date-fns';
+import { withUserAuth } from '@/context/withUserAuth';
+
+const electionsPerPage = 12;
 
 const ElectionsPage: React.FC = () => {
-    const { elections, loading, error, refetch } = useGetAllElections();
     const router = useRouter();
-    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-    const [alert, setAlert] = useState<{
-        type: 'success' | 'error' | 'info' | null;
-        message: string;
-    }>({ type: null, message: '' });
+    const { elections, totalElections, loading, error, fetchElections } =
+        useGetPaginatedElections();
+
+    const [filterState, setFilterState] = useState(0); // 0 = All, 1 = Active, 2 = Finished
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+
+    useEffect(() => {
+        const offset = (currentPage - 1) * electionsPerPage;
+        fetchElections(offset, electionsPerPage, filterState);
+    }, [currentPage, filterState]);
 
     const formatTimestamp = (timestamp: number) => {
-        // Use 24-hour time format
-        return format(new Date(timestamp * 1000), 'dd/MM/yyyy HH:mm');
+        return format(new Date(timestamp * 1000), 'dd/MM/yyyy HH:mm'); // 24-hour format
     };
 
-    const handleRefetch = async () => {
-        try {
-            setAlert({ type: 'info', message: 'Refreshing data...' });
-            await refetch();
-            setAlert({
-                type: 'success',
-                message: 'Data refreshed successfully!',
-            });
-        } catch (err: any) {
-            setAlert({
-                type: 'error',
-                message: err.message || error || 'Failed to refresh data.',
-            });
-        }
+    const handleSearch = () => {
+        const filtered = elections.filter(
+            (election) =>
+                election.name
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                String(election.id).includes(searchTerm)
+        );
+        return filtered;
     };
+
+    const paginatedElections = handleSearch();
 
     return (
         <main className='min-h-full h-full flex-grow bg-gray-100 flex flex-col items-center py-10 gap-6'>
-            <h1 className='text-3xl font-semibold text-gray-800 mb-6'>
-                All Elections
-            </h1>
+            <Box className='w-full max-w-5xl flex flex-col items-center gap-6'>
+                {/* Page Title */}
+                <Typography variant='h4' className='text-center mb-4'>
+                    Elections
+                </Typography>
 
-            {/* Display Alerts */}
-            {alert.type && (
-                <Alert
-                    severity={alert.type}
-                    className='mb-4 w-full max-w-4xl'
-                    onClose={() => setAlert({ type: null, message: '' })}
-                >
-                    {alert.message}
-                </Alert>
-            )}
-
-            {/* Loading State */}
-            {loading && (
-                <Box className='w-full max-w-4xl flex flex-col items-center justify-center gap-4'>
-                    <Typography
-                        variant='body1'
-                        className='text-gray-600 text-center'
+                {/* Tabs and Search Bar */}
+                <Box className='w-full flex justify-between items-center mb-4'>
+                    <Tabs
+                        value={filterState}
+                        onChange={(e, newValue) => {
+                            setCurrentPage(1);
+                            setFilterState(newValue);
+                        }}
                     >
-                        Loading elections...
-                    </Typography>
-                    <CircularProgress className='mx-auto block' />
+                        <Tab label='All' />
+                        <Tab label='Active' />
+                        <Tab label='Finished' />
+                    </Tabs>
+                    <TextField
+                        label='Search by Name or ID'
+                        variant='outlined'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className='w-64'
+                    />
                 </Box>
-            )}
 
-            {/* Error State */}
-            {error && (
-                <Alert severity='error' className='w-full max-w-4xl'>
-                    {error}
-                </Alert>
-            )}
+                {/* Alerts */}
+                {error && (
+                    <Alert severity='error' className='w-full'>
+                        {error}
+                    </Alert>
+                )}
 
-            {/* Elections List */}
-            {!loading && !error && (
-                <>
-                    <Button
-                        variant='contained'
-                        color='primary'
-                        onClick={handleRefetch}
-                        className='mb-6'
-                    >
-                        Refresh Elections
-                    </Button>
-                    <Grid container spacing={3} className='max-w-5xl'>
-                        {elections.map((election) => {
-                            const isEnded = election.endTime < currentTime;
+                {/* Loading Indicator */}
+                {loading ? (
+                    <Box className='w-full flex flex-col items-center gap-4'>
+                        <Typography>Loading elections...</Typography>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Grid container spacing={3}>
+                        {paginatedElections.map((election) => {
+                            const isEnded =
+                                election.endTime < Date.now() / 1000;
                             const isActive = election.isActive && !isEnded;
 
                             return (
@@ -108,22 +111,14 @@ const ElectionsPage: React.FC = () => {
                                     key={election.id}
                                 >
                                     <Card
-                                        className={`shadow-lg transition-shadow duration-200 ${
-                                            isEnded
-                                                ? 'cursor-pointer hover:shadow-xl'
-                                                : 'cursor-pointer hover:shadow-xl'
-                                        }`}
-                                        onClick={() => {
-                                            if (isEnded) {
-                                                router.push(
-                                                    `/results/${election.id}`
-                                                );
-                                            } else {
-                                                router.push(
-                                                    `/vote/${election.id}`
-                                                );
-                                            }
-                                        }}
+                                        className='shadow-lg hover:shadow-xl transition-shadow duration-200'
+                                        onClick={() =>
+                                            router.push(
+                                                isEnded
+                                                    ? `/results/${election.id}`
+                                                    : `/vote/${election.id}`
+                                            )
+                                        }
                                     >
                                         <CardContent>
                                             <Typography
@@ -133,27 +128,18 @@ const ElectionsPage: React.FC = () => {
                                             >
                                                 {election.name}
                                             </Typography>
-                                            <Typography
-                                                variant='body2'
-                                                color='textSecondary'
-                                            >
-                                                <strong>Election ID:</strong>{' '}
+                                            <Typography variant='body2'>
+                                                <strong>ID:</strong>{' '}
                                                 {election.id}
                                             </Typography>
-                                            <Typography
-                                                variant='body2'
-                                                color='textSecondary'
-                                            >
-                                                <strong>Start Time:</strong>{' '}
+                                            <Typography variant='body2'>
+                                                <strong>Start:</strong>{' '}
                                                 {formatTimestamp(
                                                     election.startTime
                                                 )}
                                             </Typography>
-                                            <Typography
-                                                variant='body2'
-                                                color='textSecondary'
-                                            >
-                                                <strong>End Time:</strong>{' '}
+                                            <Typography variant='body2'>
+                                                <strong>End:</strong>{' '}
                                                 {formatTimestamp(
                                                     election.endTime
                                                 )}
@@ -167,13 +153,11 @@ const ElectionsPage: React.FC = () => {
                                                 }
                                                 className='font-semibold mt-2'
                                             >
-                                                <strong>
-                                                    {isEnded
-                                                        ? 'Election Ended'
-                                                        : isActive
-                                                        ? 'Currently Active'
-                                                        : 'Not Active Yet'}
-                                                </strong>
+                                                {isEnded
+                                                    ? 'Ended'
+                                                    : isActive
+                                                    ? 'Active'
+                                                    : 'Not Started'}
                                             </Typography>
                                         </CardContent>
                                     </Card>
@@ -181,8 +165,18 @@ const ElectionsPage: React.FC = () => {
                             );
                         })}
                     </Grid>
-                </>
-            )}
+                )}
+
+                {/* Pagination */}
+                {totalElections > 0 && (
+                    <Pagination
+                        count={Math.ceil(totalElections / electionsPerPage)}
+                        page={currentPage}
+                        onChange={(e, value) => setCurrentPage(value)}
+                        className='mt-4'
+                    />
+                )}
+            </Box>
         </main>
     );
 };

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRegisterVoter } from '@/hooks/useRegisterVoter';
 import { withAdminAuth } from '@/context/withAdminAuth';
-import { useGetAllElections } from '@/hooks/useGetAllElections';
+import { useGetPaginatedElections } from '@/hooks/useGetPaginatedElections';
 import {
     TextField,
     Button,
@@ -15,6 +15,7 @@ import {
     Select,
     MenuItem,
     CircularProgress,
+    Pagination,
 } from '@mui/material';
 
 const RegisterVoterPage: React.FC = () => {
@@ -32,24 +33,22 @@ const RegisterVoterPage: React.FC = () => {
         loading: registering,
         error: registerError,
     } = useRegisterVoter();
+
     const {
         elections,
+        totalElections,
         loading: loadingElections,
         error: electionsError,
-    } = useGetAllElections();
+        fetchElections,
+    } = useGetPaginatedElections();
 
-    const [activeElections, setActiveElections] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
-    // Filter active elections
     useEffect(() => {
-        if (elections) {
-            const now = Math.floor(Date.now() / 1000); // Current time in seconds
-            const active = elections.filter(
-                (election) => election.isActive && election.endTime > now
-            );
-            setActiveElections(active);
-        }
-    }, [elections]);
+        // Fetch active elections with pagination (FilterState: 1 for active elections)
+        fetchElections((currentPage - 1) * itemsPerPage, itemsPerPage, 1);
+    }, [currentPage]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,7 +96,7 @@ const RegisterVoterPage: React.FC = () => {
                     Register Voter (Admin)
                 </Typography>
 
-                {/* Display alerts */}
+                {/* Display Alerts */}
                 {alert.type && (
                     <Alert
                         severity={alert.type}
@@ -129,15 +128,15 @@ const RegisterVoterPage: React.FC = () => {
                                 )
                             }
                             disabled={
-                                loadingElections || activeElections.length === 0
+                                loadingElections || elections.length === 0
                             }
                         >
                             {loadingElections ? (
                                 <MenuItem disabled>
                                     <CircularProgress size={24} />
                                 </MenuItem>
-                            ) : activeElections.length > 0 ? (
-                                activeElections.map((election) => (
+                            ) : elections.length > 0 ? (
+                                elections.map((election) => (
                                     <MenuItem
                                         key={election.id}
                                         value={election.id}
@@ -183,6 +182,18 @@ const RegisterVoterPage: React.FC = () => {
                         )}
                     </Button>
                 </form>
+
+                {/* Pagination */}
+                {totalElections > itemsPerPage && (
+                    <Box className='flex justify-center mt-6'>
+                        <Pagination
+                            count={Math.ceil(totalElections / itemsPerPage)}
+                            page={currentPage}
+                            onChange={(_, page) => setCurrentPage(page)}
+                            color='primary'
+                        />
+                    </Box>
+                )}
             </Box>
         </main>
     );

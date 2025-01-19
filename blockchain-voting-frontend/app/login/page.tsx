@@ -30,6 +30,7 @@ export default function LoginPage() {
                 message: 'Wallet connected successfully!',
             });
         } catch (err) {
+            console.log("Caught an error", err)
             setAlert({
                 type: 'error',
                 message: error || 'Failed to connect wallet.',

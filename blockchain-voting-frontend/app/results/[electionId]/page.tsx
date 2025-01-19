@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useGetElectionDetails } from '@/hooks/useGetElectionDetails';
 import {
     CircularProgress,
@@ -17,6 +17,7 @@ import { withUserAuth } from '@/context/withUserAuth';
 
 const ResultsPage: React.FC = () => {
     const { electionId } = useParams();
+    const router = useRouter();
     const electionIdNumber = parseInt(electionId as string, 10);
 
     const { details, loading, error, refetch } =
@@ -193,9 +194,17 @@ const ResultsPage: React.FC = () => {
                     )
                 )}
 
-                {/* Refetch Button */}
+                {/* Voters Page Button */}
                 {!loading && !error && (
-                    <Box className='flex justify-center mt-6'>
+                    <Box className='flex justify-center mt-6 gap-6'>
+                        <Button
+                            variant='outlined'
+                            color='secondary'
+                            onClick={() => router.push(`/voters/${electionId}`)}
+                            className='mr-4'
+                        >
+                            View Voters
+                        </Button>
                         <Button
                             variant='contained'
                             color='primary'

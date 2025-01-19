@@ -290,4 +290,64 @@ contract BlockchainVoting {
 
         return (voterAddresses, isRegisteredArray, hasVotedArray, votesArray);
     }
+
+    function getPaginatedElections(
+        uint offset,
+        uint limit,
+        uint8 filterState // 0 = all, 1 = active, 2 = finished
+    )
+        public
+        view
+        returns (
+            uint[] memory ids,
+            string[] memory names,
+            uint[] memory startTimes,
+            uint[] memory endTimes,
+            bool[] memory states
+        )
+    {
+        uint totalElections = electionCounter;
+        uint resultCount = 0;
+
+        // First pass: count how many elections match the filter
+        for (uint i = offset; i < offset + limit && i <= totalElections; i++) {
+            bool include = true;
+            if (filterState == 1) {
+                include = elections[i].isActive;
+            } else if (filterState == 2) {
+                include = !elections[i].isActive;
+            }
+
+            if (include) {
+                resultCount++;
+            }
+        }
+
+        // Allocate memory for result arrays
+        ids = new uint[](resultCount);
+        names = new string[](resultCount);
+        startTimes = new uint[](resultCount);
+        endTimes = new uint[](resultCount);
+        states = new bool[](resultCount);
+
+        // Second pass: populate result arrays
+        uint index = 0;
+        for (uint i = offset; i < offset + limit && i <= totalElections; i++) {
+            bool include = true;
+            if (filterState == 1) {
+                include = elections[i].isActive;
+            } else if (filterState == 2) {
+                include = !elections[i].isActive;
+            }
+
+            if (include) {
+                ids[index] = elections[i].id;
+                names[index] = elections[i].name;
+                startTimes[index] = elections[i].startTime;
+                endTimes[index] = elections[i].endTime;
+                states[index] = elections[i].isActive;
+                index++;
+            }
+        }
+    }
 }

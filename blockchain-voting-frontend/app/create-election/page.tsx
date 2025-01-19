@@ -3,15 +3,7 @@
 import React, { useState } from 'react';
 import { useCreateElection } from '@/hooks/useCreateElection';
 import { withAdminAuth } from '@/context/withAdminAuth';
-import {
-    TextField,
-    Button,
-    Alert,
-    Stack,
-    Chip,
-    Box,
-    Snackbar,
-} from '@mui/material';
+import { TextField, Button, Alert, Stack, Chip, Box } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -85,7 +77,7 @@ const CreateElectionPage: React.FC = () => {
             setStartTime(null);
             setEndTime(null);
             setCandidates([]);
-        } catch (err) {
+        } catch (err: unknown) {
             setAlert({
                 type: 'error',
                 message:

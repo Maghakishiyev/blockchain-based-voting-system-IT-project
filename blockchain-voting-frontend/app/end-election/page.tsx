@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { withAdminAuth } from '@/context/withAdminAuth';
 import { useEndElection } from '@/hooks/useEndElection';
-import { useGetAllElections } from '@/hooks/useGetAllElections';
+import { useGetPaginatedElections } from '@/hooks/useGetPaginatedElections';
 import {
     Button,
     CircularProgress,
@@ -15,6 +15,8 @@ import {
     Select,
     FormControl,
     InputLabel,
+    Box,
+    Pagination,
 } from '@mui/material';
 
 const EndElectionPage: React.FC = () => {
@@ -25,12 +27,12 @@ const EndElectionPage: React.FC = () => {
     } = useEndElection();
     const {
         elections,
+        totalElections,
         loading: electionsLoading,
         error: electionsError,
-        refetch,
-    } = useGetAllElections();
+        fetchElections,
+    } = useGetPaginatedElections();
 
-    const [filteredElections, setFilteredElections] = useState<any[]>([]);
     const [selectedElection, setSelectedElection] = useState<number | null>(
         null
     );
@@ -39,16 +41,13 @@ const EndElectionPage: React.FC = () => {
         message: string;
     }>({ type: null, message: '' });
 
-    // Filter elections with a past end date
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     useEffect(() => {
-        if (elections) {
-            const now = Math.floor(Date.now() / 1000); // Current time in seconds
-            const pastElections = elections.filter(
-                (election) => election.endTime < now && election.isActive
-            );
-            setFilteredElections(pastElections);
-        }
-    }, [elections]);
+        // Fetch active elections with pagination
+        fetchElections((currentPage - 1) * itemsPerPage, itemsPerPage, 1); // FilterState: 1 for active elections
+    }, [currentPage]);
 
     const handleEndElection = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +68,7 @@ const EndElectionPage: React.FC = () => {
                 message: `Election #${selectedElection} has been successfully ended.`,
             });
             setSelectedElection(null); // Clear selection
-            refetch();
+            fetchElections((currentPage - 1) * itemsPerPage, itemsPerPage, 1); // Refetch active elections
         } catch (error: any) {
             setAlert({
                 type: 'error',
@@ -93,6 +92,7 @@ const EndElectionPage: React.FC = () => {
                         End an Election
                     </Typography>
 
+                    {/* Display Alerts */}
                     {alert.type && (
                         <Alert
                             severity={alert.type}
@@ -105,6 +105,7 @@ const EndElectionPage: React.FC = () => {
                         </Alert>
                     )}
 
+                    {/* Loading State */}
                     {electionsLoading ? (
                         <div className='flex justify-center'>
                             <CircularProgress />
@@ -128,10 +129,10 @@ const EndElectionPage: React.FC = () => {
                                             Number(e.target.value)
                                         )
                                     }
-                                    disabled={filteredElections.length === 0}
+                                    disabled={elections.length === 0}
                                 >
-                                    {filteredElections.length > 0 ? (
-                                        filteredElections.map((election) => (
+                                    {elections.length > 0 ? (
+                                        elections.map((election) => (
                                             <MenuItem
                                                 key={election.id}
                                                 value={election.id}
@@ -148,10 +149,10 @@ const EndElectionPage: React.FC = () => {
                                 </Select>
                             </FormControl>
 
-                            {filteredElections.length === 0 && (
+                            {elections.length === 0 && (
                                 <Alert severity='info'>
-                                    No elections are available to end at the
-                                    moment.
+                                    No active elections are available to end at
+                                    the moment.
                                 </Alert>
                             )}
 
@@ -162,7 +163,7 @@ const EndElectionPage: React.FC = () => {
                                 fullWidth
                                 disabled={
                                     endingLoading ||
-                                    filteredElections.length === 0 ||
+                                    elections.length === 0 ||
                                     !selectedElection
                                 }
                             >
@@ -176,6 +177,18 @@ const EndElectionPage: React.FC = () => {
                                 )}
                             </Button>
                         </form>
+                    )}
+
+                    {/* Pagination */}
+                    {totalElections > itemsPerPage && (
+                        <Box className='flex justify-center mt-4'>
+                            <Pagination
+                                count={Math.ceil(totalElections / itemsPerPage)}
+                                page={currentPage}
+                                onChange={(_, page) => setCurrentPage(page)}
+                                color='primary'
+                            />
+                        </Box>
                     )}
                 </CardContent>
             </Card>

@@ -33,6 +33,7 @@ export interface BlockchainVotingInterface extends Interface {
       | "endElection"
       | "getCandidates"
       | "getElectionDetails"
+      | "getPaginatedElections"
       | "getResults"
       | "getVoterProfile"
       | "getVoters"
@@ -74,6 +75,10 @@ export interface BlockchainVotingInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getElectionDetails",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getPaginatedElections",
+    values: [BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getResults",
@@ -124,6 +129,10 @@ export interface BlockchainVotingInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getElectionDetails",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getPaginatedElections",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getResults", data: BytesLike): Result;
@@ -319,6 +328,20 @@ export interface BlockchainVoting extends BaseContract {
     "view"
   >;
 
+  getPaginatedElections: TypedContractMethod<
+    [offset: BigNumberish, limit: BigNumberish, filterState: BigNumberish],
+    [
+      [bigint[], string[], bigint[], bigint[], boolean[]] & {
+        ids: bigint[];
+        names: string[];
+        startTimes: bigint[];
+        endTimes: bigint[];
+        states: boolean[];
+      }
+    ],
+    "view"
+  >;
+
   getResults: TypedContractMethod<
     [electionId: BigNumberish],
     [bigint[]],
@@ -423,6 +446,21 @@ export interface BlockchainVoting extends BaseContract {
         isActive: boolean;
         candidates: string[];
         results: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getPaginatedElections"
+  ): TypedContractMethod<
+    [offset: BigNumberish, limit: BigNumberish, filterState: BigNumberish],
+    [
+      [bigint[], string[], bigint[], bigint[], boolean[]] & {
+        ids: bigint[];
+        names: string[];
+        startTimes: bigint[];
+        endTimes: bigint[];
+        states: boolean[];
       }
     ],
     "view"
