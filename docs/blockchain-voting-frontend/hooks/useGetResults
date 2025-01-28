@@ -1,0 +1,117 @@
+# useGetResults Hook Documentation
+
+## Overview
+
+The `useGetResults` hook is designed to fetch the results of a specific election from the blockchain. It retrieves the number of votes for each candidate in an election. The hook also provides the ability to track the loading state, handle errors, and refetch the results.
+
+---
+
+## Exports
+
+### `useGetResults`
+
+#### Purpose
+
+This hook allows users to:
+- Fetch the results of an election.
+- Track the loading state while fetching the data.
+- Handle error states and provide a method for refetching election results.
+
+---
+
+## Usage
+
+```typescript
+import { useGetResults } from '@/hooks/useGetResults';
+
+const { results, loading, error, refetch } = useGetResults(electionId);
+```
+
+---
+
+## Hook Features
+
+### **State Variables**
+- **`results`**
+  - **Type**: `number[]`
+  - **Description**: An array of numbers representing the results (vote counts) for each candidate in the election.
+
+- **`loading`**
+  - **Type**: `boolean`
+  - **Description**: Indicates whether the election results are currently being fetched.
+
+- **`error`**
+  - **Type**: `string`
+  - **Description**: Stores any error message that occurs while fetching the results.
+
+### **Functions**
+
+#### `fetchResults`
+- **Type**: `() => void`
+- **Description**: Fetches the election results for the specified `electionId` from the contract and updates the state with the results.
+
+#### `refetch`
+- **Type**: `() => void`
+- **Description**: A method to refetch the results with the same `electionId`.
+
+---
+
+## Example
+
+```typescript
+import { useGetResults } from '@/hooks/useGetResults';
+
+function ElectionResults({ electionId }: { electionId: number }) {
+    const { results, loading, error, refetch } = useGetResults(electionId);
+
+    if (loading) return <div>Loading results...</div>;
+    if (error) return <div>Error: {error}</div>;
+
+    return (
+        <div>
+            <h2>Election Results</h2>
+            {results.length > 0 ? (
+                <ul>
+                    {results.map((votes, index) => (
+                        <li key={index}>Candidate {index + 1}: {votes} votes</li>
+                    ))}
+                </ul>
+            ) : (
+                <div>No results available.</div>
+            )}
+            <button onClick={refetch}>Refetch Results</button>
+        </div>
+    );
+}
+```
+
+---
+
+## Notes
+
+- **Global State Access**: The hook uses `UserStore` to access the initialized contract.
+- **Error Handling**: If the contract is not initialized, the hook prompts the user to connect their wallet.
+- **Data Conversion**: The hook converts `BigNumber` values (from Ethereum) to regular JavaScript numbers before setting the state.
+- **Refetching**: The hook provides a `refetch` function that allows users to refresh the election results.
+
+---
+
+## Dependencies
+
+- **Libraries**:
+  - `valtio`: For managing the global state and accessing contract data.
+  - `ethers`: For interacting with the Ethereum blockchain.
+
+---
+
+## Example Response
+
+The hook returns the following structure for results:
+
+```typescript
+const results: number[] = [100, 200, 150]; // The vote counts for each candidate
+```
+
+This structure represents the results where each number corresponds to the vote count for a candidate.
+
+---
